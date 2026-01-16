@@ -41,6 +41,9 @@ dependencies:
   
   # WebSocket support (for web platform signaling)
   web_socket_channel: ^3.0.2
+  
+  # URL Launcher for opening download links
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
