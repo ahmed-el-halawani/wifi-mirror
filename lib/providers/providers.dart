@@ -28,6 +28,24 @@ final webrtcServiceProvider = Provider<WebRTCService>((ref) {
   return service;
 });
 
+/// Provider for WebServerService (serves embedded web app over local network)
+final webServerServiceProvider = Provider<WebServerService>((ref) {
+  final service = WebServerService();
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
+/// Provider for web server status
+final webServerStatusProvider = StreamProvider<WebServerStatus>((ref) {
+  final service = ref.watch(webServerServiceProvider);
+  return service.statusStream;
+});
+
+/// Provider for current web server state
+final webServerStatusStateProvider = StateProvider<WebServerStatus?>(
+  (ref) => null,
+);
+
 /// State for app initialization
 final appInitializedProvider = FutureProvider<bool>((ref) async {
   final discoveryService = ref.read(networkDiscoveryServiceProvider);

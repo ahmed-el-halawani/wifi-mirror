@@ -55,4 +55,17 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
+  assets:
+    - assets/fonts/
+    - assets/web_app/
+    - assets/web_app/assets/
+    - assets/web_app/assets/fonts/
+    - assets/web_app/assets/packages/
+    - assets/web_app/assets/packages/cupertino_icons/
+    - assets/web_app/assets/packages/cupertino_icons/assets/
+    - assets/web_app/assets/packages/wakelock_plus/
+    - assets/web_app/assets/packages/wakelock_plus/assets/
+    - assets/web_app/assets/shaders/
+    - assets/web_app/canvaskit/
+    - assets/web_app/canvaskit/chromium/
+    - assets/web_app/icons/
