@@ -340,28 +340,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildDesktopCardsRow(ThemeData theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        // Share Card (if not web)
-        if (!kIsWeb)
-          Expanded(
-            child: _buildShareCard(
-              theme,
-              true,
-            ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1, end: 0),
-          ),
-        if (!kIsWeb) const SizedBox(width: 24),
-        // Manual Connection Card
-        Expanded(
-          child:
-              (kIsWeb
-                      ? _buildManualConnectionCard(theme, true)
-                      : _buildManualConnectionCard(theme, true))
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: 50.ms)
-                  .slideX(begin: 0.1, end: 0),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Share Card (if not web)
+            if (!kIsWeb)
+              Expanded(
+                child: _buildShareCard(theme, true)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideX(begin: -0.1, end: 0),
+              ),
+            if (!kIsWeb) const SizedBox(width: 24),
+            // Manual Connection Card
+            Expanded(
+              child:
+                  (kIsWeb
+                          ? _buildManualConnectionCard(theme, true)
+                          : _buildManualConnectionCard(theme, true))
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 50.ms)
+                      .slideX(begin: 0.1, end: 0),
+            ),
+          ],
         ),
+        // Web Server Card (only on native platforms)
+        if (!kIsWeb) ...[
+          const SizedBox(height: 24),
+          const WebServerCard(isLargeScreen: true),
+        ],
       ],
     );
   }
@@ -387,6 +396,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               .animate()
               .fadeIn(duration: 400.ms, delay: 50.ms)
               .slideY(begin: 0.1, end: 0),
+
+        // Web Server Card (only on native platforms)
+        if (!kIsWeb) const WebServerCard(isLargeScreen: false),
       ],
     );
   }
