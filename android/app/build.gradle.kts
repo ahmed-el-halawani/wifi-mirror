@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.wifimirror.wifi_mirror"
+    namespace = "com.asyncapps.wifimirror"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.wifimirror.wifi_mirror"
+        applicationId = "com.asyncapps.wifimirror"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24  // Required for flutter_webrtc

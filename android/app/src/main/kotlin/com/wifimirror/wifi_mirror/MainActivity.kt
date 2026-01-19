@@ -1,4 +1,4 @@
-package com.wifimirror.wifi_mirror
+package com.asyncapps.wifimirror
 
 import android.app.Activity
 import android.content.Context
