@@ -17,7 +17,18 @@ import 'quick_connect_card_stub.dart'
 /// Card that shows when user opens a URL with connection parameters
 /// Only visible on web platform when URL contains host and port
 class QuickConnectCard extends ConsumerStatefulWidget {
-  const QuickConnectCard({super.key});
+  final String? initialHost;
+  final int? initialPort;
+  final VoidCallback? onDismiss;
+  final EdgeInsetsGeometry margin;
+
+  const QuickConnectCard({
+    super.key,
+    this.initialHost,
+    this.initialPort,
+    this.onDismiss,
+    this.margin = const EdgeInsets.only(bottom: 16),
+  });
 
   @override
   ConsumerState<QuickConnectCard> createState() => _QuickConnectCardState();
@@ -33,7 +44,12 @@ class _QuickConnectCardState extends ConsumerState<QuickConnectCard> {
   @override
   void initState() {
     super.initState();
-    _parseUrlParams();
+    if (widget.initialHost != null) {
+      _hostIp = widget.initialHost;
+      _port = widget.initialPort;
+    } else {
+      _parseUrlParams();
+    }
   }
 
   void _parseUrlParams() {
@@ -73,7 +89,7 @@ class _QuickConnectCardState extends ConsumerState<QuickConnectCard> {
       return const SizedBox.shrink();
     }
 
-    // Check if dismissed
+    // Check if dismissed (internal or effectively handled by parent removal, but good backup)
     if (_isDismissed) {
       return const SizedBox.shrink();
     }
@@ -88,7 +104,7 @@ class _QuickConnectCardState extends ConsumerState<QuickConnectCard> {
     final port = _port ?? 50124;
 
     return Container(
-          margin: const EdgeInsets.only(left: 0, right: 0, bottom: 16),
+          margin: widget.margin,
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(20),
@@ -145,9 +161,13 @@ class _QuickConnectCardState extends ConsumerState<QuickConnectCard> {
                       // Close button
                       IconButton(
                         onPressed: () {
-                          setState(() {
-                            _isDismissed = true;
-                          });
+                          if (widget.onDismiss != null) {
+                            widget.onDismiss!();
+                          } else {
+                            setState(() {
+                              _isDismissed = true;
+                            });
+                          }
                         },
                         icon: Icon(
                           Icons.close,
@@ -314,7 +334,10 @@ class _QuickConnectCardState extends ConsumerState<QuickConnectCard> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

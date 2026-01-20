@@ -10,6 +10,11 @@ import '../../providers/providers.dart';
 import '../../providers/router.dart';
 import '../widgets/widgets.dart';
 
+// Conditional import for web URL params parsing
+import '../widgets/quick_connect_card_stub.dart'
+    if (dart.library.html) '../widgets/quick_connect_card_web.dart'
+    as url_helper;
+
 /// Main home screen with device discovery and sharing options
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +28,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late AnimationController _pulseController;
   bool _isStartingShare = false;
 
+  // Web Quick Connect State
+  String? _quickConnectHost;
+  int? _quickConnectPort;
+  bool _showQuickConnect = false;
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +44,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Start discovery when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startDiscovery();
+      _parseUrlParams();
+    });
+  }
+
+  void _parseUrlParams() {
+    if (!kIsWeb) return;
+    try {
+      final params = url_helper.getUrlParams();
+      final host = params['host'];
+      final portStr = params['port'];
+
+      if (host != null && host.isNotEmpty) {
+        setState(() {
+          _quickConnectHost = host;
+          _quickConnectPort = int.tryParse(portStr ?? '50124') ?? 50124;
+          _showQuickConnect = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error parsing URL params: $e');
+    }
+  }
+
+  void _dismissQuickConnect() {
+    setState(() {
+      _showQuickConnect = false;
     });
   }
 
@@ -165,7 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       // Web Platform: Quick Connect Card first (shows when URL has params)
-                      if (kIsWeb) ...const [QuickConnectCard()],
+                      // if (kIsWeb) ...const [QuickConnectCard()], // Removed to handle layout inside responsive methods
 
                       // Cards section - horizontal on large screens
                       if (isLargeScreen)
@@ -246,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // border: Border.all(
               //   // color: Theme.of(
               //   //   context,
-              //   // ).colorScheme.outlineVariant.withOpacity(0.5),
+              //   // ).colorScheme.outlineVariant.withValues(alpha: 0.5),
               // ),
             ),
             child: Image.asset(
@@ -322,9 +358,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: Container(
           padding: EdgeInsets.all(isLargeScreen ? 12 : 10),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.1),
+            ),
           ),
           child: AnimatedRotation(
             duration: const Duration(milliseconds: 500),
@@ -332,7 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Icon(
               icon,
               size: isLargeScreen ? 22 : 20,
-              color: colorScheme.onSurface.withOpacity(0.8),
+              color: colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -341,6 +379,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildDesktopCardsRow(ThemeData theme) {
+    if (kIsWeb && _showQuickConnect) {
+      return Column(
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child:
+                      QuickConnectCard(
+                            initialHost: _quickConnectHost,
+                            initialPort: _quickConnectPort,
+                            onDismiss: _dismissQuickConnect,
+                            margin: EdgeInsets.zero,
+                          )
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .slideX(begin: -0.1, end: 0),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: _buildManualConnectionCard(theme, true)
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 50.ms)
+                      .slideX(begin: 0.1, end: 0),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         Row(
@@ -379,6 +450,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _buildMobileCards(ThemeData theme) {
     return Column(
       children: [
+        // Web Quick Connect (if applicable)
+        if (kIsWeb && _showQuickConnect)
+          QuickConnectCard(
+            initialHost: _quickConnectHost,
+            initialPort: _quickConnectPort,
+            onDismiss: _dismissQuickConnect,
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+
         // Share My Screen Card (hidden on web)
         if (!kIsWeb)
           _buildShareCard(
@@ -414,12 +493,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.4),
-            colorScheme.primaryContainer.withOpacity(0.2),
+            colorScheme.primaryContainer.withValues(alpha: 0.4),
+            colorScheme.primaryContainer.withValues(alpha: 0.2),
           ],
         ),
         borderRadius: BorderRadius.circular(isLargeScreen ? 20 : 16),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
       ),
       child: isLargeScreen
           ? _buildDesktopWebNotice(theme, colorScheme)
@@ -433,12 +512,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.15),
+            color: colorScheme.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
             Icons.language_rounded,
-            color: colorScheme.primary,
+            color: theme.colorScheme.secondaryContainer,
             size: 32,
           ),
         ),
@@ -457,7 +536,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Text(
                 'Use manual connection to view shared screens. For screen sharing, download the native app for your platform.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -471,9 +550,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               builder: (context) => const WebInstructionsDialog(),
             );
           },
-          icon: const Icon(Icons.help_outline_rounded, size: 18),
-          label: const Text('Help'),
+          icon:  Icon(Icons.help_outline_rounded, size: 18,color: theme.colorScheme.secondaryContainer),
+          label:  Text('Help',style: TextStyle(color: theme.colorScheme.secondaryContainer),),
           style: OutlinedButton.styleFrom(
+            side:  BorderSide(
+              color: theme.colorScheme.secondaryContainer,
+              width: 2,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           ),
         ),
@@ -485,9 +568,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               builder: (context) => const DownloadAppsDialog(),
             );
           },
-          icon: const Icon(Icons.download_rounded, size: 18),
-          label: const Text('Download Apps'),
+          icon:  Icon(Icons.download_rounded, size: 18,color: theme.colorScheme.background),
+          label:  Text('Download Apps',style: TextStyle(color: theme.colorScheme.background),),
           style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.secondaryContainer,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           ),
         ),
@@ -504,7 +588,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.2),
+                color: colorScheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -528,7 +612,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   Text(
                     'Use manual connection to view shared screens.',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -592,7 +676,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(isLargeScreen ? 28 : 24),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -629,7 +713,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     Text(
                       'Enter the IP address of a device sharing its screen',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -655,9 +739,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -695,7 +779,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       Text(
                         'Enter IP address to connect to a shared screen',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -703,7 +787,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: colorScheme.onSurface.withOpacity(0.4),
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ],
             ),
@@ -722,7 +806,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(isLargeScreen ? 28 : 24),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -759,7 +843,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     Text(
                       'Let others view your screen in real-time',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -802,7 +888,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             vertical: isLargeScreen ? 6 : 4,
           ),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.15),
+            color: theme.colorScheme.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(isLargeScreen ? 14 : 12),
           ),
           child: Text(
@@ -927,7 +1013,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ? Icons.devices_rounded
                         : Icons.cloud_off_rounded),
               size: iconSize,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           SizedBox(height: isLargeScreen ? 32 : 24),
@@ -953,7 +1039,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ? 'Make sure other devices are connected to the same WiFi network'
                         : 'Enter the IP address and port of a device sharing its screen'),
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1092,14 +1178,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.3)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: feature.color.withOpacity(0.15),
+              color: feature.color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -1123,7 +1211,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 Text(
                   feature.description,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
