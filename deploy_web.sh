@@ -1,10 +1,14 @@
 #!/bin/bash
+set -e  # Exit on error
 
 # Build the web app
-flutter build web --base-href "/wifi-mirror/" --release
+flutter build web --base-href="/" --release
 
 # Navigate to build output
 cd build/web
+
+# Add CNAME file with your custom domain
+echo "wifimirror.asyncapps.com" > CNAME
 
 # Initialize a new git repo for deployment
 git init

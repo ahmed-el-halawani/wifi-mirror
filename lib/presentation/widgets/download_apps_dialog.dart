@@ -89,7 +89,7 @@ class DownloadAppsDialog extends StatelessWidget {
                       // 'Low latency',
                     ],
                     downloadUrl:
-                        'https://github.com/navneetprajapati26/wifi-mirror/releases/latest/download/wifi-mirror.apk',
+                        'https://play.google.com/store/apps/details?id=com.asyncapps.wifimirror',
                     buttonText: 'Download APK',
                   ),
 
