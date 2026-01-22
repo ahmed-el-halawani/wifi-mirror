@@ -36,12 +36,23 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      # CHANGED: Build Debug APK instead of Release
+      # 1. Build Android (Debug as requested)
       - name: Build Android APK (Debug)
         run: flutter build apk --debug
 
-      - name: Build iOS IPA (No Codesign)
-        run: flutter build ipa --release --no-codesign
+      # 2. Build iOS .app (Release mode, easier for Sideloading than Debug)
+      - name: Build iOS App (No Codesign)
+        run: flutter build ios --release --no-codesign
+
+      # 3. Manually create the IPA file
+      # This mimics what Xcode does: puts the .app into a 'Payload' folder and zips it.
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          # Move the built .app into the Payload folder
+          mv build/ios/iphoneos/Runner.app Payload
+          # Zip it into an IPA
+          zip -r wifi_mirror.ipa Payload
 
       - name: Generate Tag & Changelog
         id: tag_version
@@ -55,7 +66,6 @@ jobs:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
-          # CHANGED: Updated file path to point to app-debug.apk
           files: |
             build/app/outputs/flutter-apk/app-debug.apk
-            build/ios/ipa/*.ipa
+            wifi_mirror.ipa
